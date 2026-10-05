@@ -1,0 +1,52 @@
+name: Build MATH WORLD APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Bağımlılıkları kur
+        run: npm install
+
+      - name: Android projesini oluştur
+        run: |
+          if [ ! -d android ]; then npx cap add android; fi
+          npx cap sync android
+
+      - name: Uygulama simgesi
+        run: |
+          if [ -f icon.png ]; then
+            rm -rf android/app/src/main/res/mipmap-anydpi-v26
+            for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+              cp icon.png android/app/src/main/res/$d/ic_launcher.png
+              cp icon.png android/app/src/main/res/$d/ic_launcher_round.png
+              cp icon.png android/app/src/main/res/$d/ic_launcher_foreground.png || true
+            done
+          fi
+
+      - name: APK derle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: APK'yı yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: MathWorld-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
