@@ -19,7 +19,10 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-
+      - name: www klasörünü hazırla
+        run: |
+          mkdir -p www
+          if [ -f index.html ]; then cp index.html www/index.html; fi
       - name: Bağımlılıkları kur
         run: npm install
 
