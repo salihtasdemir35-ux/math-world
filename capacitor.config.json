@@ -1,0 +1,8 @@
+{
+  "appId": "com.mathworld.kids",
+  "appName": "Math World",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#E4F3FF"
+  }
+}
