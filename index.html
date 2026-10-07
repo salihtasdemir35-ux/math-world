@@ -393,6 +393,7 @@ textarea{width:100%;min-height:120px;border-radius:14px;border:2px solid var(--l
 
 /* Oyuncu seçimi */
 .plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:10px}
+@media (max-width:560px){.plist{grid-template-columns:repeat(3,1fr);gap:10px}.pcard{padding:10px 4px;font-size:.95rem;border-radius:20px}.pcard .pav{font-size:2.3rem!important;width:60px!important;height:60px!important}.pcard small{font-size:.75rem}}
 .pcard{background:var(--card);border:4px solid var(--line);border-radius:26px;padding:16px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 6px 0 var(--line);font-size:1.15rem}
 .pcard:active{transform:translateY(4px);box-shadow:0 2px 0 var(--line)}
 .pcard.sel{border-color:var(--sun-d)}
@@ -840,7 +841,7 @@ function saveProgress(){
   let e=PROF.list.find(p=>p.id===PROF.active);if(!e){e={id:PROF.active};PROF.list.push(e);}
   Object.assign(e,{name:S.playerName,avatar:S.avatar,grade:S.grade,level:S.level});writeJSON(PROF_KEY,PROF);
 }
-function newProfile(){if(S&&S.onboarded)saveProgress();PROF.active='p'+Date.now().toString(36);S=defaultState();}
+function newProfile(){if(S&&S.onboarded)saveProgress();let id;do{id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}while(PROF.list.some(p=>p.id===id));PROF.active=id;S=defaultState();}
 function useProfile(id){saveProgress();PROF.active=id;writeJSON(PROF_KEY,PROF);hydrate(readJSON(stateKey(id)));S.onboarded=true;applySettings();touchDay();}
 function deleteProfile(id){try{localStorage.removeItem(stateKey(id));}catch(e){}PROF.list=PROF.list.filter(p=>p.id!==id);if(PROF.active===id)PROF.active=null;writeJSON(PROF_KEY,PROF);}
 function todayStr(d){d=d||new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
@@ -2058,7 +2059,7 @@ SCREENS.home=()=>{touchDay();const g=S.grade,dm=S.dailyMissions,w=S.weekly;
   const tiles=[['map','🗺️','Matematik Dünyası','#2F7BEA','#DCEAFF'],['games','🎮','Oyunlar','#FF8736','#FFE6D3'],['puzzles','🧩','Bulmacalar','#F2557A','#FFE0E8'],
     ['topics','📚','Konular','#8857F2','#E9E0FF'],['lab','🔬','Matematik Lab','#21A659','#D6F5E2']];
   if(g>=3)tiles.push(['thinking','🧠','Düşünme Lab','#13A89E','#D2F4F1']);
-  tiles.push(['practice','🔄','Tekrar Et','#C2325A','#FFE0E8'],['badges','🏆','Başarılar','#D99B00','#FFF1C7'],['progress','📊','İlerlemem','#1C59B5','#DCEAFF'],['avatars','🎭','Kahramanım','#D2611A','#FFE6D3'],['parent','👪','Ebeveyn','#5D6B8F','#E6EBF5']);
+  tiles.push(['practice','🔄','Tekrar Et','#C2325A','#FFE0E8'],['badges','🏆','Başarılar','#D99B00','#FFF1C7'],['progress','📊','İlerlemem','#1C59B5','#DCEAFF'],['avatars','🎭','Kahramanım','#D2611A','#FFE6D3'],['parent','👪','Ebeveyn / Yönetici','#5D6B8F','#E6EBF5']);
   const mins=Math.round(hist().sec/60);
   V_(`<section class="card"><div class="hello"><div class="bigav">${S.avatar}</div><div><h1>Merhaba ${esc(S.playerName)}! 👋</h1>
     <div class="row" style="gap:8px;margin:6px 0"><button class="btn sm p" data-root="grade">🎒 ${g}. sınıf · Değiştir</button><button class="btn sm w" data-root="who">👤 Oyuncu değiştir</button></div><div class="statrow"><span class="pill">⭐ Seviye ${S.level}</span><span class="pill">🪙 ${S.coins}</span><span class="pill">💎 ${S.gems}</span><span class="pill">🔥 ${S.streak} günlük seri</span></div></div></div>
@@ -2308,7 +2309,7 @@ SCREENS.result=(r)=>{const st=r.mode==='speed'?(r.acc>=.9?3:r.acc>=.7?2:1):(r.ac
 SCREENS.session=(o)=>startSession(o);
 
 /* ---------- Ebeveyn paneli ---------- */
-SCREENS.parent=()=>{pinGate(()=>go('parentPanel',S.grade,false));V_(`${head('Ebeveyn Paneli','👪')}<p class="muted center" style="font-weight:800">PIN bekleniyor...</p>`);};
+SCREENS.parent=()=>{pinGate(()=>go('parentPanel',S.grade,false));V_(`${head('Ebeveyn / Yönetici Paneli','👪')}<p class="muted center" style="font-weight:800">PIN bekleniyor...</p>`);};
 function pinGate(ok){let pin='';if(!PROF.pin&&S.pin){PROF.pin=S.pin;writeJSON(PROF_KEY,PROF);}const setting=!PROF.pin;let first=null;
   const draw=()=>{const b=modal(`<span class="mbe">🔒</span><h2>${setting?(first?'PIN\'i tekrar gir':'Ebeveyn PIN\'i oluştur'):'Ebeveyn PIN\'i'}</h2><p class="muted" style="font-weight:700">${setting?'4 haneli bir PIN belirleyin. Çocuğunuzun bilmemesi önerilir.':'Panele girmek için PIN girin.'}</p>
     <div class="pin">${[0,1,2,3].map(i=>`<i class="${i<pin.length?'f':''}"></i>`).join('')}</div><div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="key" data-k="${n}">${n}</button>`).join('')}<button class="key del" data-k="x" aria-label="Kapat">✕</button><button class="key" data-k="0">0</button><button class="key del" data-k="d" aria-label="Sil">⌫</button></div>`,{close:false});
@@ -2332,7 +2333,7 @@ SCREENS.parentPanel=(g)=>{g=g||S.grade;const gd=gradeData(g);
     if(range<=7||i%5===0)chart+=`<text x="${i*bw+bw/2}" y="155" text-anchor="middle" font-size="11" fill="currentColor">${d.t.slice(8)}.${d.t.slice(5,7)}</text>`;});
   chart+='</svg>';
   const st=S.settings;
-  V_(`${head('Ebeveyn Paneli','👪')}<div class="gradepick">${[1,2,3,4].map(x=>`<button class="chip${x===g?' on':''}" data-pg="${x}">${x}. Sınıf raporu</button>`).join('')}</div>
+  V_(`${head('Ebeveyn / Yönetici Paneli','👪')}<div class="gradepick">${[1,2,3,4].map(x=>`<button class="chip${x===g?' on':''}" data-pg="${x}">${x}. Sınıf raporu</button>`).join('')}</div>
   <section class="card"><h3>📊 Genel bakış: ${esc(S.playerName)} (${g}. sınıf)</h3><div class="kpis">
     <div class="kpi"><b>%${acc}</b><small>Genel başarı</small></div><div class="kpi"><b>${tot.a}</b><small>Çözülen soru</small></div><div class="kpi"><b>${tot.c} / ${tot.a-tot.c}</b><small>Doğru / Yanlış</small></div>
     <div class="kpi"><b>${Math.round(allSec/60)} dk</b><small>Toplam çalışma</small></div><div class="kpi"><b>${todayMin} dk</b><small>Bugün</small></div><div class="kpi"><b>${avgMin} dk</b><small>Aktif gün ortalaması</small></div></div>
@@ -2349,8 +2350,8 @@ SCREENS.parentPanel=(g)=>{g=g||S.grade;const gd=gradeData(g);
   <section class="card"><h3>💾 Yedekleme</h3><p class="muted" style="font-weight:700">İlerlemeyi JSON olarak dışa aktarın veya başka bir cihazdan içe aktarın.</p>
     <div class="row"><button class="btn g" id="exp">📥 EXPORT (dışa aktar)</button><button class="btn p" id="imp">📤 IMPORT (içe aktar)</button><input type="file" id="impf" accept=".json,application/json" class="sr"></div>
     <div id="bk" style="margin-top:10px"></div></section>
-  <section class="card"><h3>👥 Oyuncular</h3>${PROF.list.map(p=>`<div class="switch"><span>${p.avatar} ${esc(p.name)} <small class="muted">(${p.grade}. sınıf)</small>${p.id===PROF.active?' · <b>şu an</b>':''}</span><button class="btn sm r" data-del="${p.id}">🗑️ Sil</button></div>`).join('')}
-    <div class="row" style="margin-top:10px"><button class="btn sm g" id="addP">➕ Yeni oyuncu ekle</button><button class="btn sm w" id="whoP">👤 Oyuncu değiştir</button></div></section>`);
+  <section class="card"><h3>👥 Oyuncular (${PROF.list.length}/${MAX_PLAYERS})</h3><p class="muted" style="font-weight:700;margin-top:0">Oyuncuyu silmek, o oyuncunun tüm ilerlemesini ve rozetlerini kalıcı olarak siler.</p>${PROF.list.map(p=>`<div class="switch"><span>${p.avatar} ${esc(p.name)} <small class="muted">(${p.grade}. sınıf)</small>${p.id===PROF.active?' · <b>şu an</b>':''}</span><button class="btn sm r" data-del="${p.id}">🗑️ Sil</button></div>`).join('')}
+    <div class="row" style="margin-top:10px">${PROF.list.length<MAX_PLAYERS?'<button class="btn sm g" id="addP">➕ Yeni oyuncu ekle</button>':'<span class="muted" style="font-weight:800">En fazla '+MAX_PLAYERS+' oyuncu eklenebilir.</span>'}<button class="btn sm w" id="whoP">👤 Oyuncu değiştir</button></div></section>`);
   $$('[data-pg]').forEach(b=>b.onclick=()=>go('parentPanel',+b.dataset.pg,false));
   $$('[data-rg]').forEach(b=>b.onclick=()=>{SCREENS.parentPanel.range=+b.dataset.rg;go('parentPanel',g,false);});
   $$('[data-set]').forEach(b=>b.onclick=()=>{const k=b.dataset.set;st[k]=!st[k];applySettings();saveProgress();go('parentPanel',g,false);});
@@ -2367,15 +2368,16 @@ SCREENS.parentPanel=(g)=>{g=g||S.grade;const gd=gradeData(g);
     $('#impok').onclick=()=>{try{const d=JSON.parse($('#impt').value);if(!d||typeof d!=='object'||!('xp' in d)||!('grades' in d))throw new Error('format');hydrate(d);S.onboarded=true;saveProgress();applySettings();toast('✔ İlerleme bu oyuncuya aktarıldı');goHome();}catch(err){toast('Bu dosya geçerli bir MATH WORLD yedeği değil.');}};};
   $$('[data-del]').forEach(b=>b.onclick=()=>{const p=PROF.list.find(x=>x.id===b.dataset.del);confirmBox(`${esc(p.name)} ve tüm ilerlemesi silinsin mi? Bu işlem geri alınamaz.`,()=>{const cur=p.id===PROF.active;deleteProfile(p.id);NAV.length=0;
       if(!PROF.list.length){S=defaultState();go('onboard',0,false);}else if(cur){S=defaultState();go('who',null,false);}else go('parentPanel',g,false);},'Sil');});
-  $('#addP').onclick=()=>{saveProgress();NAV.length=0;go('onboard',0,false);};
+  if($('#addP'))$('#addP').onclick=()=>{saveProgress();NAV.length=0;go('onboard',0,false);};
   $('#whoP').onclick=()=>{saveProgress();go('who',null,false);};
 };
 
 /* ---------- Oyuncu seçimi ("Kim oynuyor?") ---------- */
+const MAX_PLAYERS=30;
 SCREENS.who=()=>{NAV.length=0;
   V_(`<div class="wiz" style="max-width:760px"><span class="logo">🧮</span><h1>Kim oynuyor?</h1>
   <div class="plist">${PROF.list.map(p=>`<button class="pcard${p.id===PROF.active?' sel':''}" data-pid="${p.id}"><span class="pav">${p.avatar}</span><b>${esc(p.name)}</b><small>${p.grade}. sınıf · ⭐ ${p.level}</small></button>`).join('')}
-  ${PROF.list.length<8?'<button class="pcard add" id="padd"><span class="pav">➕</span><b>Yeni oyuncu</b><small>Kardeş ya da arkadaş ekle</small></button>':''}</div>
+  ${PROF.list.length<MAX_PLAYERS?'<button class="pcard add" id="padd"><span class="pav">➕</span><b>Yeni oyuncu</b><small>Kardeş ya da arkadaş ekle</small></button>':''}</div>
   <p class="muted" style="font-weight:700;margin-top:16px">Her oyuncunun ilerlemesi, rozetleri ve sınıfı ayrı saklanır.</p></div>`);
   $$('[data-pid]').forEach(b=>b.onclick=()=>{sfx('tap');useProfile(b.dataset.pid);go('grade',null,false);});
   const a=$('#padd');if(a)a.onclick=()=>{saveProgress();go('onboard',0,false);};
